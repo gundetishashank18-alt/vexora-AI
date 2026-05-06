@@ -4,6 +4,8 @@ load_dotenv()
 import os
 import requests
 import secrets
+import re
+import urllib.parse
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from groq import Groq
@@ -30,6 +32,24 @@ def needs_search(user_message):
     if len(msg.split()) <= 2 and msg in ["hi", "hello", "hii", "ok", "thanks", "bye"]:
         return False
     return True
+
+def is_image_request(user_message):
+    """Image generate cheyyala check chestadi"""
+    msg = user_message.lower()
+    image_keywords = ['draw', 'generate', 'create', 'image', 'picture', 'gese', 'chey', 'photo', 'drawing', 'paint', 'sketch']
+    return any(word in msg for word in image_keywords)
+
+def generate_image_url(prompt):
+    """Pollinations.ai tho image URL create chestadi"""
+    # Prompt clean chey - "dog drawing chey" → "dog"
+    clean_prompt = re.sub(r'(draw|generate|create|image|picture|gese|chey|photo|drawing|paint|sketch|kavali|create|generate)', '', prompt, flags=re.IGNORECASE).strip()
+    if not clean_prompt:
+        clean_prompt = prompt
+
+    encoded_prompt = urllib.parse.quote(clean_prompt)
+    # model=flux best quality, nologo=true ads teesestadi
+    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=768&height=768&model=flux&nologo=true"
+    return image_url, clean_prompt
 
 def google_search(query):
     try:
@@ -120,11 +140,23 @@ def chat():
 def api_chat():
     if not session.get('logged_in'):
         return jsonify({'reply': 'Login avvu mama'}), 401
+
     user_message = request.json.get('message', '')
     if not user_message:
         return jsonify({'reply': 'Emanna type chey mama'})
+
+    # Image request aa check chey
+    if is_image_request(user_message):
+        image_url, clean_prompt = generate_image_url(user_message)
+        return jsonify({
+            'reply': f'Ikkada nee image: {clean_prompt} 🎨',
+            'image_url': image_url,
+            'is_image': True
+        })
+
+    # Normal text chat
     reply = get_vexora_response(user_message)
-    return jsonify({'reply': reply})
+    return jsonify({'reply': reply, 'is_image': False})
 
 @app.route('/logout')
 def logout():

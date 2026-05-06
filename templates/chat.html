@@ -50,6 +50,24 @@
         .user-avatar { background: #5436da; color: white; }
         .bot-avatar { background: #19c37d; color: white; }
         .message-content { line-height: 1.75; white-space: pre-wrap; flex: 1; }
+        .message-content img {
+            max-width: 100%; 
+            border-radius: 12px; 
+            margin-top: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: block;
+        }
+        .download-btn {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: #19c37d;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .download-btn:hover { background: #16a870; }
         .input-area {
             padding: 24px; display: flex; justify-content: center; border-top: 1px solid #e5e5e5;
         }
@@ -105,9 +123,8 @@
         <div class="chat-area" id="chatArea">
             <div class="welcome" id="welcome">
                 <h1>Vexora</h1>
-                <p>Namaste mama 💚 Em kavali?</p>
+                <p>Namaste mama 💚 Em kavali? Image kavalante "dog drawing chey" ani adugu</p>
             </div>
-        </div>
         <div class="input-area">
             <div class="input-box">
                 <textarea id="userInput" placeholder="Message Vexora..." rows="1" onkeydown="if(event.key==='Enter' && !event.shiftKey) {event.preventDefault(); sendMessage();}"></textarea>
@@ -163,9 +180,22 @@
                 });
                 const data = await response.json();
 
-                document.getElementById(typingId).innerHTML = `
-                    <div class="avatar bot-avatar"><i class="fa-solid fa-bolt"></i></div>
-                    <div class="message-content">${data.reply}</div>`;
+                // Image response aa leda check chey
+                if (data.is_image && data.image_url) {
+                    document.getElementById(typingId).innerHTML = `
+                        <div class="avatar bot-avatar"><i class="fa-solid fa-bolt"></i></div>
+                        <div class="message-content">
+                            ${data.reply}
+                            <img src="${data.image_url}" alt="Generated Image" loading="lazy">
+                            <a href="${data.image_url}" download="vexora-image.png" class="download-btn">
+                                <i class="fa-solid fa-download"></i> Download Image
+                            </a>
+                        </div>`;
+                } else {
+                    document.getElementById(typingId).innerHTML = `
+                        <div class="avatar bot-avatar"><i class="fa-solid fa-bolt"></i></div>
+                        <div class="message-content">${data.reply}</div>`;
+                }
 
             } catch (err) {
                 document.getElementById(typingId).innerHTML = `
